@@ -117,6 +117,10 @@ func main() {
 	if env == "" {
 		env = "local"
 	}
+	if env != "local" {
+		initProfiler()
+		initTrace()
+	}
 
 	config := loadConfig("../config/" + env + ".json")
 	db := config.Database
