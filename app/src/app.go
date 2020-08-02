@@ -1,7 +1,9 @@
 package main
 
 import (
+	"contrib.go.opencensus.io/integrations/ocsql"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -130,11 +132,13 @@ func main() {
 
 	dbConnPool = make(chan *sqlx.DB, dbConnPoolSize)
 	for i := 0; i < dbConnPoolSize; i++ {
-		conn, err := sqlx.Open(tracedDriver("mysql"), connectionString)
+		conn, err := sql.Open(tracedDriver("mysql"), connectionString)
 		if err != nil {
 			log.Panicf("Error opening database: %v", err)
 		}
-		dbConnPool <- conn
+
+		dbx := sqlx.NewDB(db, "mysql")
+		dbConnPool <- dbx
 		defer conn.Close()
 	}
 
