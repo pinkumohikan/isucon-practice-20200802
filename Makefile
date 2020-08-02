@@ -24,4 +24,5 @@ kataribe:
 	sudo cat /var/log/nginx/access.log | kataribe
 
 slow-query:
-	@ls /var/lib/mysql/mysql-slow.log
+	sudo mysqldumpslow -t 10 /var/lib/mysql/mysql-slow.log
+
