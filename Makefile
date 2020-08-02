@@ -21,5 +21,7 @@ restart:
 	sudo bash -c "echo '' > $(SLOW_LOG)" && sudo systemctl restart mysqld.service
 
 kataribe:
-	cat /var/log/nginx/access.log | kataribe
+	sudo cat /var/log/nginx/access.log | kataribe
 
+slow-query:
+	@ls /var/lib/mysql/mysql-slow.log
