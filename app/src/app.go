@@ -1,14 +1,10 @@
 package main
 
 import (
-	"github.com/gorilla/sessions"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/securecookie"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -19,16 +15,21 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 )
 
 const (
-	memosPerPage       = 100
-	listenAddr         = ":5000"
-	sessionName        = "isucon_session"
-	tmpDir             = "/tmp/"
-	markdownCommand    = "../bin/markdown"
-	dbConnPoolSize     = 10
-	sessionSecret      = "kH<{11qpic*gf0e21YK7YtwyUvE9l<1r>yX8R-Op"
+	memosPerPage    = 100
+	listenAddr      = ":5000"
+	sessionName     = "isucon_session"
+	tmpDir          = "/tmp/"
+	markdownCommand = "../bin/markdown"
+	dbConnPoolSize  = 10
+	sessionSecret   = "kH<{11qpic*gf0e21YK7YtwyUvE9l<1r>yX8R-Op"
 )
 
 type Config struct {
@@ -241,7 +242,7 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	rows.Close()
 
-	rows, err = dbConn.Query("SELECT * FROM memos WHERE is_private=0 ORDER BY created_at DESC, id DESC LIMIT ?", memosPerPage)
+	rows, err = dbConn.Query("SELECT memos.*,users.username FROM memos JOIN users ON  memos.user = users.id WHERE memos.is_private = 0 ORDER BY memos.created_at DESC, memos.id DESC LIMIT ?", memosPerPage)
 	if err != nil {
 		serverError(w, err)
 		return
@@ -255,8 +256,7 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	for rows.Next() {
 		memo := Memo{}
-		rows.Scan(&memo.Id, &memo.User, &memo.Content, &memo.IsPrivate, &memo.CreatedAt, &memo.UpdatedAt)
-		stmtUser.QueryRow(memo.User).Scan(&memo.Username)
+		rows.Scan(&memo.Id, &memo.User, &memo.Content, &memo.IsPrivate, &memo.CreatedAt, &memo.UpdatedAt, &memo.Username)
 		memos = append(memos, &memo)
 	}
 	rows.Close()
