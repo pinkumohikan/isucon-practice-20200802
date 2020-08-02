@@ -242,7 +242,7 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	rows.Close()
 
-	rows, err = dbConn.Query("SELECT memos.*,users.username FROM memos JOIN users ON  memos.user = users.id WHERE memos.is_private = 0 ORDER BY memos.created_at DESC, memos.id DESC LIMIT ?", memosPerPage)
+	rows, err = dbConn.Query("SELECT memos.*,users.username FROM memos FORCE INDEX (memos_idx_is_private_created_at) JOIN users ON memos.user = users.id WHERE memos.is_private = 0 ORDER BY memos.created_at DESC, memos.id DESC LIMIT ?", memosPerPage)
 	if err != nil {
 		serverError(w, err)
 		return
