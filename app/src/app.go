@@ -242,11 +242,12 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	rows.Close()
 
-	rows, err = dbConn.Query("SELECT memos.*,users.username FROM memos FORCE INDEX (memos_idx_is_private_created_at) JOIN users ON memos.user = users.id WHERE memos.is_private = 0 ORDER BY memos.created_at DESC, memos.id DESC LIMIT ?", memosPerPage)
+	rows, err = dbConn.Query("SELECT * FROM memos WHERE is_private=0 ORDER BY created_at DESC, id DESC LIMIT ?", memosPerPage)
 	if err != nil {
 		serverError(w, err)
 		return
 	}
+
 	memos := make(Memos, 0)
 	stmtUser, err := dbConn.Prepare("SELECT username FROM users WHERE id=?")
 	defer stmtUser.Close()
@@ -254,11 +255,26 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
+	var userIds []int
 	for rows.Next() {
 		memo := Memo{}
-		rows.Scan(&memo.Id, &memo.User, &memo.Content, &memo.IsPrivate, &memo.CreatedAt, &memo.UpdatedAt, &memo.Username)
+		rows.Scan(&memo.Id, &memo.User, &memo.Content, &memo.IsPrivate, &memo.CreatedAt, &memo.UpdatedAt)
 		memos = append(memos, &memo)
+		userIds = append(userIds, memo.User)
 	}
+
+	sql := `SELECT username FROM users WHERE id IN (?)`
+	sql, params, err := sqlx.In(sql, userIds)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var users []User
+	if err := sqlx.Select(dbConn, &users, sql, params); err != nil {
+		log.Fatal(err)
+	}
+
+	// もう一回for回してusers.usernameを構造体memosに当てはめる
+
 	rows.Close()
 
 	v := &View{
