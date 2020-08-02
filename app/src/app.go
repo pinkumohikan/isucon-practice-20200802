@@ -263,7 +263,7 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 		userIds = append(userIds, memo.User)
 	}
 
-	sql := `SELECT username FROM users WHERE id IN (?)`
+	sql := `SELECT id,username FROM users WHERE id IN (?)`
 	sql, params, err := sqlx.In(sql, userIds)
 	if err != nil {
 		log.Fatal(err)
@@ -273,7 +273,7 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	// もう一回for回してusers.usernameを構造体memosに当てはめる
+	// もう一回for回してmemosをアップデートしていく
 
 	rows.Close()
 
