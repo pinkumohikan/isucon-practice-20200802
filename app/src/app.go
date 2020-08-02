@@ -119,7 +119,6 @@ func main() {
 		initProfiler()
 		initTrace()
 	}
-
 	config := loadConfig("../config/" + env + ".json")
 	db := config.Database
 	connectionString := fmt.Sprintf(
