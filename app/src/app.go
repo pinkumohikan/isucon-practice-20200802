@@ -109,8 +109,7 @@ var (
 )
 
 func main() {
-	initProfiler()
-	initTrace()
+
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
@@ -118,6 +117,7 @@ func main() {
 	if env == "" {
 		env = "local"
 	}
+
 	config := loadConfig("../config/" + env + ".json")
 	db := config.Database
 	connectionString := fmt.Sprintf(
