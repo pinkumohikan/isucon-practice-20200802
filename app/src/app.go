@@ -269,7 +269,7 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	var users []User
-	if err := sqlx.Select(dbConn, &users, sql, params); err != nil {
+	if err := sqlx.Select(dbConn, &users, sql, params...); err != nil {
 		log.Fatal(err)
 	}
 
