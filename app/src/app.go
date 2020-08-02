@@ -130,7 +130,7 @@ func main() {
 
 	dbConnPool = make(chan *sqlx.DB, dbConnPoolSize)
 	for i := 0; i < dbConnPoolSize; i++ {
-		conn, err := sqlx.Open("mysql", connectionString)
+		conn, err := sqlx.Open(tracedDriver("mysql"), connectionString)
 		if err != nil {
 			log.Panicf("Error opening database: %v", err)
 		}
@@ -149,7 +149,7 @@ func main() {
 	r.HandleFunc("/recent/{page:[0-9]+}", recentHandler)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./public/")))
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(listenAddr, nil))
+	log.Fatal(http.ListenAndServe(listenAddr, withTrace(r)))
 }
 
 func loadConfig(filename string) *Config {
