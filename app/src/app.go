@@ -109,8 +109,6 @@ var (
 )
 
 func main() {
-
-
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	env := os.Getenv("ISUCON_ENV")
