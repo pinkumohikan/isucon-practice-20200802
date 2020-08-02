@@ -249,12 +249,6 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	memos := make(Memos, 0)
-	stmtUser, err := dbConn.Prepare("SELECT username FROM users WHERE id=?")
-	defer stmtUser.Close()
-	if err != nil {
-		serverError(w, err)
-		return
-	}
 	var userIds []int
 	for rows.Next() {
 		memo := Memo{}
@@ -329,18 +323,31 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	memos := make(Memos, 0)
-	stmtUser, err := dbConn.Prepare("SELECT username FROM users WHERE id=?")
-	defer stmtUser.Close()
-	if err != nil {
-		serverError(w, err)
-		return
-	}
+	var userIds []int
 	for rows.Next() {
 		memo := Memo{}
 		rows.Scan(&memo.Id, &memo.User, &memo.Content, &memo.IsPrivate, &memo.CreatedAt, &memo.UpdatedAt)
-		stmtUser.QueryRow(memo.User).Scan(&memo.Username)
+		userIds = append(userIds, memo.User)
 		memos = append(memos, &memo)
 	}
+	sql := `SELECT id,username FROM users WHERE id IN (?)`
+	sql, params, err := sqlx.In(sql, userIds)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var users []User
+	if err := sqlx.Select(dbConn, &users, sql, params...); err != nil {
+		log.Fatal(err)
+	}
+
+	for _, m := range memos {
+		for _, u := range users {
+			if u.Id == m.User {
+				m.Username = u.Username
+			}
+		}
+	}
+
 	if len(memos) == 0 {
 		notFound(w)
 		return
