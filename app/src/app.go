@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/sha256"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -20,6 +19,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
+	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -76,7 +76,7 @@ type View struct {
 }
 
 var (
-	dbConnPool chan *sql.DB
+	dbConnPool chan *sqlx.DB
 	baseUrl    *url.URL
 	fmap       = template.FuncMap{
 		"url_for": func(path string) string {
@@ -124,9 +124,9 @@ func main() {
 	)
 	log.Printf("db: %s", connectionString)
 
-	dbConnPool = make(chan *sql.DB, dbConnPoolSize)
+	dbConnPool = make(chan *sqlx.DB, dbConnPoolSize)
 	for i := 0; i < dbConnPoolSize; i++ {
-		conn, err := sql.Open("mysql", connectionString)
+		conn, err := sqlx.Open("mysql", connectionString)
 		if err != nil {
 			log.Panicf("Error opening database: %v", err)
 		}
@@ -177,7 +177,7 @@ func loadSession(w http.ResponseWriter, r *http.Request) (session *sessions.Sess
 	return store.Get(r, sessionName)
 }
 
-func getUser(w http.ResponseWriter, r *http.Request, dbConn *sql.DB, session *sessions.Session) *User {
+func getUser(w http.ResponseWriter, r *http.Request, dbConn *sqlx.DB, session *sessions.Session) *User {
 	userId := session.Values["user_id"]
 	if userId == nil {
 		return nil
