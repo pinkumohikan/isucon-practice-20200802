@@ -136,7 +136,7 @@ func main() {
 			log.Panicf("Error opening database: %v", err)
 		}
 
-		dbx := sqlx.NewDB(db, "mysql")
+		dbx := sqlx.NewDb(db, "mysql")
 		dbConnPool <- dbx
 		defer conn.Close()
 	}
