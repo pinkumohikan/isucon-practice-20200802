@@ -273,7 +273,13 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	// もう一回for回してmemosをアップデートしていく
+	for _, m := range memos {
+		for _, u := range users {
+			if u.Id == m.User {
+				m.Username = u.Username
+			}
+		}
+	}
 
 	rows.Close()
 
