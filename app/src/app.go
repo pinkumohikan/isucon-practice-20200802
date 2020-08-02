@@ -249,12 +249,6 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	memos := make(Memos, 0)
-	stmtUser, err := dbConn.Prepare("SELECT username FROM users WHERE id=?")
-	defer stmtUser.Close()
-	if err != nil {
-		serverError(w, err)
-		return
-	}
 	var userIds []int
 	for rows.Next() {
 		memo := Memo{}
@@ -329,12 +323,6 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	memos := make(Memos, 0)
-	stmtUser, err := dbConn.Prepare("SELECT username FROM users WHERE id=?")
-	defer stmtUser.Close()
-	if err != nil {
-		serverError(w, err)
-		return
-	}
 	var userIds []int
 	for rows.Next() {
 		memo := Memo{}
