@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="8ce95f78-9929-4b40-a4c7-2c19e68502ba" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CodeStyleSettingsInfer">
+    <option name="done" value="true" />
+  </component>
+  <component name="ComposerSettings">
+    <execution />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="1" />
+  </component>
+  <component name="ProjectId" id="1eDEDL8rAaKymrjf6Hjm4GFNJF6" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/cookbooks/ssh" />
+    </key>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="8ce95f78-9929-4b40-a4c7-2c19e68502ba" name="Default Changelist" comment="" />
+      <created>1593847642538</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1593847642538</updated>
+      <workItem from="1593847646430" duration="83000" />
+      <workItem from="1593847736359" duration="526000" />
+      <workItem from="1593853520474" duration="5680000" />
+      <workItem from="1593929330582" duration="1158000" />
+      <workItem from="1594833306694" duration="194000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="2" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="-1360" y="284" key="#Plugins" timestamp="1593847728895">
+      <screen x="-1920" y="96" width="1920" height="1080" />
+    </state>
+    <state x="-1360" y="284" key="#Plugins/-1920.96.1920.1080/0.0.1680.1050@-1920.96.1920.1080" timestamp="1593847728895" />
+    <state x="-1295" y="337" width="670" height="676" key="search.everywhere.popup" timestamp="1593924159022">
+      <screen x="-1920" y="96" width="1920" height="1080" />
+    </state>
+    <state x="-1295" y="337" width="670" height="676" key="search.everywhere.popup/-1920.119.1920.1057/0.23.1680.1027@-1920.119.1920.1057" timestamp="1593870005596" />
+    <state x="-1295" y="337" width="670" height="676" key="search.everywhere.popup/-1920.96.1920.1080/0.0.1680.1050@-1920.96.1920.1080" timestamp="1593924159022" />
+  </component>
+</project>
