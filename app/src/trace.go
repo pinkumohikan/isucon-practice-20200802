@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"cloud.google.com/go/profiler"
 	"contrib.go.opencensus.io/exporter/stackdriver"
@@ -41,6 +42,7 @@ func withTrace(h http.Handler) http.Handler {
 }
 
 func tracedDriver(driverName string) string {
+	ocsql.RegisterAllViews()
 	driverName, err := ocsql.Register(driverName, ocsql.WithQuery(true), ocsql.WithQueryParams(true))
 	if err != nil {
 		log.Fatal(err)
