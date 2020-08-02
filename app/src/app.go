@@ -1,7 +1,6 @@
 package main
 
 import (
-	"contrib.go.opencensus.io/integrations/ocsql"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
