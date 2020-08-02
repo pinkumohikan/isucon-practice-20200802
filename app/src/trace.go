@@ -7,6 +7,7 @@ import (
 
 	"cloud.google.com/go/profiler"
 	"contrib.go.opencensus.io/exporter/stackdriver"
+	"contrib.go.opencensus.io/exporter/stackdriver/propagation"
 	"contrib.go.opencensus.io/integrations/ocsql"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/trace"
@@ -32,11 +33,12 @@ func initTrace() {
 	}
 	trace.RegisterExporter(exporter)
 
-	trace.ApplyConfig(trace.Config{DefaultSampler: trace.ProbabilitySampler(0.05)})
+	//trace.ApplyConfig(trace.Config{DefaultSampler: trace.ProbabilitySampler(0.05)})
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 }
 
 func withTrace(h http.Handler) http.Handler {
-	return &ochttp.Handler{Handler: h}
+	return &ochttp.Handler{Handler: h, Propagation: &propagation.HTTPFormat{}}
 }
 
 func tracedDriver(driverName string) string {
