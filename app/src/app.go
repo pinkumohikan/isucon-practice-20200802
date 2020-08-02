@@ -351,6 +351,15 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 	if err := sqlx.Select(dbConn, &users, sql, params...); err != nil {
 		log.Fatal(err)
 	}
+
+	for _, m := range memos {
+		for _, u := range users {
+			if u.Id == m.User {
+				m.Username = u.Username
+			}
+		}
+	}
+
 	if len(memos) == 0 {
 		notFound(w)
 		return
