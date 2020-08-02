@@ -109,6 +109,9 @@ var (
 )
 
 func main() {
+	initProfiler()
+	initTrace()
+
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	env := os.Getenv("ISUCON_ENV")
