@@ -7,4 +7,4 @@ mysql -uisucon -pisucon isucon -e "CREATE INDEX memos_idx_user_created_at ON mem
 mysql -uisucon -pisucon isucon -e "CREATE INDEX memos_idx_03 ON memos (user, is_private, created_at)"
 
 mysql -uisucon -pisucon isucon -e "ALTER TABLE memos ADD COLUMN title VARCHAR(1000) DEFAULT ''"
-mysql -uisucon -pisucon isucon -e "UPDATE memos SET title = SUBSTRING_INDEX(content, \"\\n\", 1);"
+mysql -uisucon -pisucon isucon -e "REATE TRIGGER make_title AFTER INSERT ON memos FOR EACH ROW UPDATE memos SET title = substring_index(NEW.content, \"\\n\", 1)"
