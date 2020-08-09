@@ -58,7 +58,7 @@ type Memo struct {
 	User      int
 	Title string
 	Content   string
-	IsPrivate int
+	IsPrivate int `db:"is_private"`
 	CreatedAt string
 	UpdatedAt string
 	Username  string
