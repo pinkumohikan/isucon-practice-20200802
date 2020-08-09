@@ -15,7 +15,7 @@
 <ul>
 {{ range .Memos }}
 <li>
-  <a href="{{ url_for "/memo/" }}{{ .Id }}">{{ first_line .Content }}</a> by {{ .Username }} ({{ .CreatedAt }})
+  <a href="{{ url_for "/memo/" }}{{ .Id }}">{{ .Title }}</a> by {{ .Username }} ({{ .CreatedAt }})
   {{ if .IsPrivate }}
   [private]
   {{ end }}
