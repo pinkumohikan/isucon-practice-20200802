@@ -317,7 +317,15 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	rows.Close()
 
-	rows, err = dbConn.Query("SELECT * FROM memos WHERE is_private=0 ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?", memosPerPage, memosPerPage*page)
+	// limit:取得数、offset:取得開始位置
+	rows, err = dbConn.Query("SELECT memo_id FROM public_memos LIMIT ? OFFSET ?", memosPerPage, memosPerPage*page)
+	var memoIds []int
+	for rows.Next() {
+		memoId := 0
+		rows.Scan(memoId)
+		memoIds = append(memoIds, memoId)
+	}
+	rows, err = dbConn.Query("SELECT * FROM memos WHERE id IN(?)", memoIds)
 	if err != nil {
 		serverError(w, err)
 		return
