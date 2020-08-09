@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
+	"contrib.go.opencensus.io/integrations/ocsql"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -14,6 +17,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -116,6 +120,10 @@ func main() {
 	if env == "" {
 		env = "local"
 	}
+	if env != "local" {
+		initProfiler()
+		initTrace()
+	}
 	config := loadConfig("../config/" + env + ".json")
 	db := config.Database
 	connectionString := fmt.Sprintf(
@@ -126,11 +134,16 @@ func main() {
 
 	dbConnPool = make(chan *sqlx.DB, dbConnPoolSize)
 	for i := 0; i < dbConnPoolSize; i++ {
-		conn, err := sqlx.Open("mysql", connectionString)
+		conn, err := sql.Open(tracedDriver("mysql"), connectionString)
 		if err != nil {
 			log.Panicf("Error opening database: %v", err)
 		}
-		dbConnPool <- conn
+
+
+
+		dbx := sqlx.NewDb(conn, "mysql")
+		dbConnPool <- dbx
+		defer ocsql.RecordStats(conn, 5 * time.Second)()
 		defer conn.Close()
 	}
 
@@ -145,7 +158,7 @@ func main() {
 	r.HandleFunc("/recent/{page:[0-9]+}", recentHandler)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./public/")))
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(listenAddr, nil))
+	log.Fatal(http.ListenAndServe(listenAddr, withTrace(r)))
 }
 
 func loadConfig(filename string) *Config {
@@ -177,13 +190,13 @@ func loadSession(w http.ResponseWriter, r *http.Request) (session *sessions.Sess
 	return store.Get(r, sessionName)
 }
 
-func getUser(w http.ResponseWriter, r *http.Request, dbConn *sqlx.DB, session *sessions.Session) *User {
+func getUser(ctx context.Context, w http.ResponseWriter, r *http.Request, dbConn *sqlx.DB, session *sessions.Session) *User {
 	userId := session.Values["user_id"]
 	if userId == nil {
 		return nil
 	}
 	user := &User{}
-	rows, err := dbConn.Query("SELECT * FROM users WHERE id=?", userId)
+	rows, err := dbConn.QueryContext(ctx, "SELECT * FROM users WHERE id=?", userId)
 	if err != nil {
 		serverError(w, err)
 		return nil
@@ -229,7 +242,8 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dbConnPool <- dbConn
 	}()
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 
 	var totalCount int
 	rows, err := dbConn.Query("SELECT count(*) AS c FROM memos WHERE is_private=0")
@@ -302,7 +316,8 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dbConnPool <- dbConn
 	}()
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 	vars := mux.Vars(r)
 	page, _ := strconv.Atoi(vars["page"])
 
@@ -378,7 +393,8 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dbConnPool <- dbConn
 	}()
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 
 	v := &View{
 		User:    user,
@@ -468,8 +484,8 @@ func mypageHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dbConnPool <- dbConn
 	}()
-
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 	if user == nil {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
@@ -508,7 +524,8 @@ func memoHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dbConnPool <- dbConn
 	}()
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 
 	q := `
 		SELECT
@@ -603,7 +620,8 @@ func memoPostHandler(w http.ResponseWriter, r *http.Request) {
 		dbConnPool <- dbConn
 	}()
 
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 	if user == nil {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
