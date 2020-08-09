@@ -28,12 +28,11 @@ slow-query:
 
 all-deploy: brunch=master
 all-deploy:
-	ssh  isucon-app-1 "cd /opt/isucon3-mod && make deploy ${brunch}" & \
-	ssh  isucon-app-2 "cd /opt/isucon3-mod && make deploy ${brunch}"
+	ssh  isucon-app-1 "cd /opt/isucon3-mod; make deploy ${brunch}" & \
+	ssh  isucon-app-2 "cd /opt/isucon3-mod; make deploy ${brunch}"
 
 deploy: brunch=master
 deploy:
 	git checkout ${brunch}
 	git pull
 	make restart
-
