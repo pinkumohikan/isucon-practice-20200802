@@ -182,15 +182,14 @@ func getUser(w http.ResponseWriter, r *http.Request, dbConn *sqlx.DB, session *s
 	if userId == nil {
 		return nil
 	}
-	user := &User{}
-	rows, err := dbConn.Query("SELECT * FROM users WHERE id=?", userId)
-	if err != nil {
-		serverError(w, err)
+	userName := session.Values["username"]
+	if userName == nil {
 		return nil
 	}
-	if rows.Next() {
-		rows.Scan(&user.Id, &user.Username, &user.Password, &user.Salt, &user.LastAccess)
-		rows.Close()
+
+	user := &User{
+		Id:       userId.(int),
+		Username: userName.(string),
 	}
 	if user != nil {
 		w.Header().Add("Cache-Control", "private")
@@ -420,6 +419,7 @@ func signinPostHandler(w http.ResponseWriter, r *http.Request) {
 		if user.Password == fmt.Sprintf("%x", h.Sum(nil)) {
 			session.Values["user_id"] = user.Id
 			session.Values["token"] = fmt.Sprintf("%x", securecookie.GenerateRandomKey(32))
+			session.Values["username"] = user.Username
 			if err := session.Save(r, w); err != nil {
 				serverError(w, err)
 				return
