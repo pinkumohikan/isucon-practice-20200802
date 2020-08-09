@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"contrib.go.opencensus.io/integrations/ocsql"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
@@ -18,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	"contrib.go.opencensus.io/integrations/ocsql"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gomarkdown/markdown"
 	"github.com/gorilla/mux"
@@ -27,11 +28,11 @@ import (
 )
 
 const (
-	memosPerPage    = 100
-	listenAddr      = ":5000"
-	sessionName     = "isucon_session"
-	dbConnPoolSize  = 10
-	sessionSecret   = "kH<{11qpic*gf0e21YK7YtwyUvE9l<1r>yX8R-Op"
+	memosPerPage   = 100
+	listenAddr     = ":5000"
+	sessionName    = "isucon_session"
+	dbConnPoolSize = 10
+	sessionSecret  = "kH<{11qpic*gf0e21YK7YtwyUvE9l<1r>yX8R-Op"
 )
 
 type Config struct {
@@ -125,11 +126,9 @@ func main() {
 			log.Panicf("Error opening database: %v", err)
 		}
 
-
-
 		dbx := sqlx.NewDb(conn, "mysql")
 		dbConnPool <- dbx
-		defer ocsql.RecordStats(conn, 5 * time.Second)()
+		defer ocsql.RecordStats(conn, 5*time.Second)()
 		defer conn.Close()
 	}
 
@@ -181,15 +180,14 @@ func getUser(ctx context.Context, w http.ResponseWriter, r *http.Request, dbConn
 	if userId == nil {
 		return nil
 	}
-	user := &User{}
-	rows, err := dbConn.QueryContext(ctx, "SELECT * FROM users WHERE id=?", userId)
-	if err != nil {
-		serverError(w, err)
+	userName := session.Values["username"]
+	if userName == nil {
 		return nil
 	}
-	if rows.Next() {
-		rows.Scan(&user.Id, &user.Username, &user.Password, &user.Salt, &user.LastAccess)
-		rows.Close()
+
+	user := &User{
+		Id:       userId.(int),
+		Username: userName.(string),
 	}
 	if user != nil {
 		w.Header().Add("Cache-Control", "private")
@@ -422,6 +420,7 @@ func signinPostHandler(w http.ResponseWriter, r *http.Request) {
 		if user.Password == fmt.Sprintf("%x", h.Sum(nil)) {
 			session.Values["user_id"] = user.Id
 			session.Values["token"] = fmt.Sprintf("%x", securecookie.GenerateRandomKey(32))
+			session.Values["username"] = user.Username
 			if err := session.Save(r, w); err != nil {
 				serverError(w, err)
 				return
