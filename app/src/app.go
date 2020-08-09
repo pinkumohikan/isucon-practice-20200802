@@ -59,8 +59,8 @@ type Memo struct {
 	Title string
 	Content   string
 	IsPrivate int `db:"is_private"`
-	CreatedAt string
-	UpdatedAt string
+	CreatedAt string `db:"created_at"`
+	UpdatedAt string `db:"updated_at"`
 	Username  string
 }
 
