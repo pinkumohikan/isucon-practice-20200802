@@ -26,13 +26,13 @@ kataribe:
 slow-query:
 	sudo mysqldumpslow -t 10 /var/lib/mysql/mysql-slow.log
 
-all-deploy: brunch=master
-all-deploy:
-	ssh  isucon-app-1 "cd /opt/isucon3-mod; make deploy ${brunch}" & \
-	ssh  isucon-app-2 "cd /opt/isucon3-mod; make deploy ${brunch}"
+BRUNCH := master
 
-deploy: brunch=master
+all-deploy:
+	ssh  isucon-app-1 "cd /opt/isucon3-mod; make deploy BRUNCH=${BRUNCH} " & \
+	ssh  isucon-app-2 "cd /opt/isucon3-mod; make deploy BRUNCH=${BRUNCH}"
+
 deploy:
-	git checkout ${brunch}
+	git checkout ${BRUNCH}
 	git pull
 	make restart
