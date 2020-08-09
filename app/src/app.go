@@ -318,7 +318,7 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 
 	// limit:取得数、offset:取得開始位置
-	rows, err = dbConn.Query("SELECT memo_id FROM public_memos BETWEEN ? AND ?", memosPerPage*page, memosPerPage*page+100)
+	rows, err = dbConn.Query("SELECT memo_id FROM public_memos LIMIT ? OFFSET ?", memosPerPage, memosPerPage*page)
 	var memoIds []int
 	for rows.Next() {
 		memoId := 0
