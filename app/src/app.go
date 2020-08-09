@@ -646,10 +646,12 @@ func memoPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	newId, _ := result.LastInsertId()
 
-	dbConn.Exec(
-		"INSERT INTO public_memos (id) VALUES (?)",
-		newId,
-	)
+	if isPrivate == 0 {
+		dbConn.Exec(
+			"INSERT INTO public_memos (memo_id) VALUES (?)",
+			newId,
+		)
+	}
 
 	http.Redirect(w, r, fmt.Sprintf("/memo/%d", newId), http.StatusFound)
 }
