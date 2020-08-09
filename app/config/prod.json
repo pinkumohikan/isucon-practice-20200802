@@ -1,7 +1,7 @@
 {
   "database": {
     "dbname": "isucon",
-    "host": "localhost",
+    "host": "172.31.45.67",
     "port": 3306,
     "username": "isucon",
     "password": "isucon"
