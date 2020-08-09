@@ -329,8 +329,8 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 		rows.Scan(&memoId)
 		memoIds = append(memoIds, memoId)
 	}
-	q := `SELECT * FROM memos WHERE id IN (?)`
-	sql, params, err := sqlx.In(q, memoIds)
+	sql := `SELECT * FROM memos WHERE id IN (?)`
+	sql, params, err := sqlx.In(sql, memoIds)
 	if err != nil {
 		log.Fatal(err)
 	}
