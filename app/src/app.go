@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -10,12 +12,15 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
+
+	"contrib.go.opencensus.io/integrations/ocsql"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gomarkdown/markdown"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -23,13 +28,11 @@ import (
 )
 
 const (
-	memosPerPage    = 100
-	listenAddr      = ":5000"
-	sessionName     = "isucon_session"
-	tmpDir          = "/tmp/"
-	markdownCommand = "../bin/markdown"
-	dbConnPoolSize  = 10
-	sessionSecret   = "kH<{11qpic*gf0e21YK7YtwyUvE9l<1r>yX8R-Op"
+	memosPerPage   = 100
+	listenAddr     = ":5000"
+	sessionName    = "isucon_session"
+	dbConnPoolSize = 10
+	sessionSecret  = "kH<{11qpic*gf0e21YK7YtwyUvE9l<1r>yX8R-Op"
 )
 
 type Config struct {
@@ -90,20 +93,8 @@ var (
 			return session.Values["token"]
 		},
 		"gen_markdown": func(s string) template.HTML {
-			f, _ := ioutil.TempFile(tmpDir, "isucon")
-			defer f.Close()
-			f.WriteString(s)
-			f.Sync()
-			finfo, _ := f.Stat()
-			path := tmpDir + finfo.Name()
-			defer os.Remove(path)
-			cmd := exec.Command(markdownCommand, path)
-			out, err := cmd.Output()
-			if err != nil {
-				log.Printf("can't exec markdown command: %v", err)
-				return ""
-			}
-			return template.HTML(out)
+			html := markdown.ToHTML([]byte(s), nil, nil)
+			return template.HTML(string(html))
 		},
 	}
 	tmpl = template.Must(template.New("tmpl").Funcs(fmap).ParseGlob("templates/*.html"))
@@ -116,6 +107,10 @@ func main() {
 	if env == "" {
 		env = "local"
 	}
+	if env != "local" {
+		initProfiler()
+		initTrace()
+	}
 	config := loadConfig("../config/" + env + ".json")
 	db := config.Database
 	connectionString := fmt.Sprintf(
@@ -126,11 +121,14 @@ func main() {
 
 	dbConnPool = make(chan *sqlx.DB, dbConnPoolSize)
 	for i := 0; i < dbConnPoolSize; i++ {
-		conn, err := sqlx.Open("mysql", connectionString)
+		conn, err := sql.Open(tracedDriver("mysql"), connectionString)
 		if err != nil {
 			log.Panicf("Error opening database: %v", err)
 		}
-		dbConnPool <- conn
+
+		dbx := sqlx.NewDb(conn, "mysql")
+		dbConnPool <- dbx
+		defer ocsql.RecordStats(conn, 5*time.Second)()
 		defer conn.Close()
 	}
 
@@ -145,7 +143,7 @@ func main() {
 	r.HandleFunc("/recent/{page:[0-9]+}", recentHandler)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./public/")))
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(listenAddr, nil))
+	log.Fatal(http.ListenAndServe(listenAddr, withTrace(r)))
 }
 
 func loadConfig(filename string) *Config {
@@ -177,7 +175,7 @@ func loadSession(w http.ResponseWriter, r *http.Request) (session *sessions.Sess
 	return store.Get(r, sessionName)
 }
 
-func getUser(w http.ResponseWriter, r *http.Request, dbConn *sqlx.DB, session *sessions.Session) *User {
+func getUser(ctx context.Context, w http.ResponseWriter, r *http.Request, dbConn *sqlx.DB, session *sessions.Session) *User {
 	userId := session.Values["user_id"]
 	if userId == nil {
 		return nil
@@ -228,7 +226,8 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dbConnPool <- dbConn
 	}()
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 
 	var totalCount int
 	rows, err := dbConn.Query("SELECT count(*) AS c FROM memos WHERE is_private=0")
@@ -301,7 +300,8 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dbConnPool <- dbConn
 	}()
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 	vars := mux.Vars(r)
 	page, _ := strconv.Atoi(vars["page"])
 
@@ -377,7 +377,8 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dbConnPool <- dbConn
 	}()
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 
 	v := &View{
 		User:    user,
@@ -468,8 +469,8 @@ func mypageHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dbConnPool <- dbConn
 	}()
-
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 	if user == nil {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
@@ -508,7 +509,8 @@ func memoHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dbConnPool <- dbConn
 	}()
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 
 	q := `
 		SELECT
@@ -603,7 +605,8 @@ func memoPostHandler(w http.ResponseWriter, r *http.Request) {
 		dbConnPool <- dbConn
 	}()
 
-	user := getUser(w, r, dbConn, session)
+	ctx := context.Background()
+	user := getUser(ctx, w, r, dbConn, session)
 	if user == nil {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return

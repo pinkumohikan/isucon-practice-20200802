@@ -21,7 +21,7 @@ services:
           - "$PWD/app:/go/src/isucon"
         environment:
             GOPATH: "/go"
-
+            GOOGLE_CLOUD_PROJECT: isucon3-2020080
     db:
         image: mysql:5.7
         environment:
