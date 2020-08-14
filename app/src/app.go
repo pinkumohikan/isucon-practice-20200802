@@ -319,9 +319,9 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 
 	// limit:取得数、offset:取得開始位置
 	if (totalCount - 100*page + 1) < 0 {
-		rows, err = dbConn.Query("SELECT memo_id FROM public_memos id BETWEEN ? AND ?", 0, (totalCount - memosPerPage*(page-1)))
+		rows, err = dbConn.Query("SELECT memo_id FROM public_memos memo_id BETWEEN ? AND ?", 0, (totalCount - memosPerPage*(page-1)))
 	} else {
-		rows, err = dbConn.Query("SELECT memo_id FROM public_memos id BETWEEN ? AND ?", (totalCount - memosPerPage*page + 1), (totalCount - memosPerPage*(page-1)))
+		rows, err = dbConn.Query("SELECT memo_id FROM public_memos memo_id BETWEEN ? AND ?", (totalCount - memosPerPage*page + 1), (totalCount - memosPerPage*(page-1)))
 	}
 	if err != nil {
 		serverError(w, err)
