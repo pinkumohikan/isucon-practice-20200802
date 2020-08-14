@@ -56,9 +56,9 @@ type User struct {
 type Memo struct {
 	Id        int
 	User      int
-	Title string
+	Title     string
 	Content   string
-	IsPrivate int `db:"is_private"`
+	IsPrivate int    `db:"is_private"`
 	CreatedAt string `db:"created_at"`
 	UpdatedAt string `db:"updated_at"`
 	Username  string
@@ -318,7 +318,11 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 
 	// limit:取得数、offset:取得開始位置
-	rows, err = dbConn.Query("SELECT memo_id FROM public_memos LIMIT ? OFFSET ?", memosPerPage, memosPerPage*page)
+	if (totalCount - 100*page + 1) < 0 {
+		rows, err = dbConn.Query("SELECT memo_id FROM public_memos BETWEEN ? AND ?", 0, (totalCount - 100*(page-1)))
+	} else {
+		rows, err = dbConn.Query("SELECT memo_id FROM public_memos BETWEEN ? AND ?", (totalCount - 100*page + 1), (totalCount - 100*(page-1)))
+	}
 	if err != nil {
 		serverError(w, err)
 		return

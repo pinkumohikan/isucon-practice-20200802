@@ -12,4 +12,4 @@ mysql -uisucon -pisucon isucon -e "CREATE TRIGGER make_title BEFORE INSERT ON me
 mysql -uisucon -pisucon isucon -e "DROP TABLE IF EXISTS public_memos" >> init.log 2>&1
 mysql -uisucon -pisucon isucon -e "CREATE TABLE public_memos (memo_id int)" >> init.log 2>&1
 mysql -uisucon -pisucon isucon -e "CREATE INDEX memo_id ON public_memos (memo_id)" >> init.log 2>&1
-mysql -uisucon -pisucon isucon -e "INSERT INTO public_memos SELECT id FROM memos WHERE is_private=0 ORDER BY created_at" >> init.log 2>&1
+mysql -uisucon -pisucon isucon -e "INSERT INTO public_memos SELECT id FROM memos WHERE is_private=0 ORDER BY created_at ASC" >> init.log 2>&1
