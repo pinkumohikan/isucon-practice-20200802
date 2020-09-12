@@ -56,11 +56,11 @@ type User struct {
 type Memo struct {
 	Id        int
 	User      int
-	Title string
+	Title     string
 	Content   string
-	IsPrivate int
-	CreatedAt string
-	UpdatedAt string
+	IsPrivate int    `db:"is_private"`
+	CreatedAt string `db:"created_at"`
+	UpdatedAt string `db:"updated_at"`
 	Username  string
 }
 
@@ -317,27 +317,54 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	rows.Close()
 
-	rows, err = dbConn.Query("SELECT * FROM memos WHERE is_private=0 ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?", memosPerPage, memosPerPage*page)
+	// limit:取得数、offset:取得開始位置
+	if (totalCount - 100*page + 1) < 0 {
+		rows, err = dbConn.Query("SELECT memo_id FROM public_memos memo_id BETWEEN ? AND ?", 0, (totalCount - memosPerPage*(page-1)))
+	} else {
+		rows, err = dbConn.Query("SELECT memo_id FROM public_memos memo_id BETWEEN ? AND ?", (totalCount - memosPerPage*page + 1), (totalCount - memosPerPage*(page-1)))
+	}
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+	var memoIds []int
+	for rows.Next() {
+		memoId := 0
+		rows.Scan(&memoId)
+		memoIds = append(memoIds, memoId)
+	}
+	if len(memoIds) == 0 {
+		notFound(w)
+		return
+	}
+
+	sql := `SELECT id, user, content, is_private, created_at, updated_at FROM memos WHERE id IN (?)`
+	sql, params, err := sqlx.In(sql, memoIds)
 	if err != nil {
 		serverError(w, err)
 		return
 	}
 	memos := make(Memos, 0)
-	var userIds []int
-	for rows.Next() {
-		memo := Memo{}
-		rows.Scan(&memo.Id, &memo.User, &memo.Content, &memo.IsPrivate, &memo.CreatedAt, &memo.UpdatedAt)
-		userIds = append(userIds, memo.User)
-		memos = append(memos, &memo)
+	if err := sqlx.Select(dbConn, &memos, sql, params...); err != nil {
+		serverError(w, err)
+		return
 	}
-	sql := `SELECT id,username FROM users WHERE id IN (?)`
-	sql, params, err := sqlx.In(sql, userIds)
+
+	var userIds []int
+	for _, m := range memos {
+		userIds = append(userIds, m.User)
+	}
+
+	sql = `SELECT id,username FROM users WHERE id IN (?)`
+	sql, params, err = sqlx.In(sql, userIds)
 	if err != nil {
-		log.Fatal(err)
+		serverError(w, err)
+		return
 	}
 	var users []User
 	if err := sqlx.Select(dbConn, &users, sql, params...); err != nil {
-		log.Fatal(err)
+		serverError(w, err)
+		return
 	}
 
 	for _, m := range memos {
@@ -346,11 +373,6 @@ func recentHandler(w http.ResponseWriter, r *http.Request) {
 				m.Username = u.Username
 			}
 		}
-	}
-
-	if len(memos) == 0 {
-		notFound(w)
-		return
 	}
 
 	v := &View{
@@ -627,5 +649,13 @@ func memoPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	newId, _ := result.LastInsertId()
+
+	if isPrivate == 0 {
+		dbConn.Exec(
+			"INSERT INTO public_memos (memo_id) VALUES (?)",
+			newId,
+		)
+	}
+
 	http.Redirect(w, r, fmt.Sprintf("/memo/%d", newId), http.StatusFound)
 }
